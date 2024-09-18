@@ -16,4 +16,4 @@ class Pic(BaseModel):
     answers: list[Answer] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

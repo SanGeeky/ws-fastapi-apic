@@ -1,3 +1,4 @@
+from random import choice
 from transformers import ViltProcessor, ViltForQuestionAnswering
 from PIL import Image
 
@@ -6,6 +7,8 @@ class VisualQuestionAnswering:
     """
     Multimodal model for visual question answering (VQA) with ViLT
     """
+    emojis = ["🤫", "🤩", "🧐", "🤠", "👀", "✅", "🧚", "🥳", "🥸"]
+
     def __init__(self) -> None:
         # Download the model if not present
         self.processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
@@ -18,4 +21,10 @@ class VisualQuestionAnswering:
         logits = outputs.logits
         idx = logits.argmax(-1).item()
 
-        return self.model.config.id2label[idx]
+        self.result = self.model.config.id2label[idx]
+
+        return self.result
+
+    @property
+    def format_answer(self):
+        return f"{self.result} {choice(self.emojis)}."

@@ -10,7 +10,7 @@ class Pic(Base):
     id = Column(Integer, primary_key=True)
     image = Column(TEXT)
 
-    answers = relationship("Answer", back_populates="pic")
+    answers = relationship("Answer", back_populates="pics")
 
 
 class Answer(Base):
