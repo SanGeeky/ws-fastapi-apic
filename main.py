@@ -8,7 +8,7 @@ from PIL import Image
 from config.database import SessionLocal, engine, Base
 from schemas.answer import CreateAnswer
 from services.answer import create_answer
-from services.pic import create_pic
+from services.pic import create_pic, get_pic
 from services.visual_question_answer import VisualQuestionAnswering
 
 
@@ -39,6 +39,22 @@ def ask(question: str, image: UploadFile, db: Session = Depends(get_db)):
     pic_db = create_pic(db, encoded_image)
     # Store Answer
     answer = CreateAnswer(question=question, answer=model_answer, pic_id=pic_db.id)
+    _ = create_answer(db, answer)
+
+    return {"answer": model.format_answer}
+
+
+@app.post("/ask/{pic_id}")
+def ask_from_image(pic_id: int, question: str, db: Session = Depends(get_db)):
+    # Read and decode image
+    pic_db = get_pic(db, pic_id)
+    content = base64.b64decode(pic_db.image)
+    image = Image.open(io.BytesIO(content))
+    # Predict new answer
+    model_answer = model.pipeline(question, image)
+
+    # Store Answer
+    answer = CreateAnswer(question=question, answer=model_answer, pic_id=pic_id)
     _ = create_answer(db, answer)
 
     return {"answer": model.format_answer}
