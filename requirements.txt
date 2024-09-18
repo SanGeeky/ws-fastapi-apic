@@ -1,0 +1,9 @@
+fastapi[standard]
+Pillow
+python-multipart
+torch
+transformers
+uvicorn
+SQLAlchemy
+httpx
+pytest
