@@ -2,12 +2,12 @@ import base64
 import io
 from sqlalchemy.orm import Session
 
-from fastapi import FastAPI, UploadFile, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, Depends
 from PIL import Image
 
 from config.database import SessionLocal, engine, Base
-from schemas.answer import CreateAnswer
-from services.answer import create_answer
+from schemas.answer import Answer, CreateAnswer
+from services.answer import create_answer, get_answer, get_answers
 from services.pic import create_pic, get_pic
 from services.visual_question_answer import VisualQuestionAnswering
 
@@ -58,6 +58,20 @@ def ask_from_image(pic_id: int, question: str, db: Session = Depends(get_db)):
     _ = create_answer(db, answer)
 
     return {"answer": model.format_answer}
+
+
+@app.get("/answer/")
+def answers(skip: int | None = None, limit: int | None = None, db: Session = Depends(get_db)) -> list[Answer]:
+    return get_answers(db, skip, limit)
+
+
+@app.get("/answer/{answer_id}", response_model=Answer)
+def answer(answer_id: int, db: Session = Depends(get_db)):
+    answer = get_answer(db, answer_id)
+    if answer is None:
+        raise HTTPException(status_code=404, detail="Answer not found.")
+
+    return answer
 
 
 @app.get("/")
