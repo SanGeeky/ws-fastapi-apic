@@ -9,6 +9,12 @@ down:
 build:
 	docker compose build
 
+bash:
+	docker compose run --rm apic bash
+
+test:
+	docker compose run --rm apic pytest -v
+
 env:
 	python3 -m venv env
 

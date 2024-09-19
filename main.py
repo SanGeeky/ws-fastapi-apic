@@ -9,13 +9,12 @@ from config.database import SessionLocal, engine, Base
 from schemas.answer import Answer, CreateAnswer
 from services.answer import create_answer, get_answer, get_answers
 from services.pic import create_pic, get_pic
-from services.visual_question_answer import VisualQuestionAnswering
+from services.visual_question_answer import VisualQuestionAnswering as VQA
 
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-model = VisualQuestionAnswering()
 
 
 # Dependency
@@ -27,8 +26,16 @@ def get_db():
         db.close()
 
 
+def get_model():
+    model = VQA()
+    try:
+        yield model
+    finally:
+        del model
+
+
 @app.post("/ask")
-def ask(question: str, image: UploadFile, db: Session = Depends(get_db)):
+def ask(question: str, image: UploadFile, db: Session = Depends(get_db), model: VQA = Depends(get_model)):
     # Predict answer
     content = image.file.read()
     image = Image.open(io.BytesIO(content))
@@ -45,7 +52,7 @@ def ask(question: str, image: UploadFile, db: Session = Depends(get_db)):
 
 
 @app.post("/ask/{pic_id}")
-def ask_from_image(pic_id: int, question: str, db: Session = Depends(get_db)):
+def ask_from_image(pic_id: int, question: str, db: Session = Depends(get_db), model: VQA = Depends(get_model)):
     # Read and decode image
     pic_db = get_pic(db, pic_id)
     content = base64.b64decode(pic_db.image)
