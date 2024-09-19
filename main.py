@@ -1,3 +1,4 @@
+import os
 import base64
 import io
 from sqlalchemy.orm import Session
@@ -6,11 +7,14 @@ from fastapi import FastAPI, HTTPException, UploadFile, Depends
 from PIL import Image
 
 from config.database import SessionLocal, engine, Base
-from schemas.answer import Answer, CreateAnswer
+from schemas.answer import Answer, CreateAnswer, ResponseAnswer
 from services.answer import create_answer, get_answer, get_answers
 from services.pic import create_pic, get_pic
 from services.visual_question_answer import VisualQuestionAnswering as VQA
 
+
+if os.getenv("ENVIRONMENT", "development") == "development":
+    model = VQA()
 
 Base.metadata.create_all(bind=engine)
 
@@ -26,16 +30,8 @@ def get_db():
         db.close()
 
 
-def get_model():
-    model = VQA()
-    try:
-        yield model
-    finally:
-        del model
-
-
-@app.post("/ask")
-def ask(question: str, image: UploadFile, db: Session = Depends(get_db), model: VQA = Depends(get_model)):
+@app.post("/ask", response_model=ResponseAnswer)
+def ask(question: str, image: UploadFile, db: Session = Depends(get_db)):
     # Predict answer
     content = image.file.read()
     image = Image.open(io.BytesIO(content))
@@ -51,8 +47,8 @@ def ask(question: str, image: UploadFile, db: Session = Depends(get_db), model: 
     return {"answer": model.format_answer}
 
 
-@app.post("/ask/{pic_id}")
-def ask_from_image(pic_id: int, question: str, db: Session = Depends(get_db), model: VQA = Depends(get_model)):
+@app.post("/ask/{pic_id}", response_model=ResponseAnswer)
+def ask_from_image(pic_id: int, question: str, db: Session = Depends(get_db)):
     # Read and decode image
     pic_db = get_pic(db, pic_id)
     content = base64.b64decode(pic_db.image)

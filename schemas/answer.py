@@ -16,3 +16,7 @@ class Answer(BaseAnswer):
 
     class Config:
         from_attributes = True
+
+
+class ResponseAnswer(BaseModel):
+    answer: str
